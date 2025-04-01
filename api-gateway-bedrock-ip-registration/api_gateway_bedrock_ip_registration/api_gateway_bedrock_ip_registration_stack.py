@@ -4,6 +4,7 @@ from aws_cdk import (
     aws_lambda as _lambda,
     aws_apigateway as apigw,
     aws_iam as iam,
+    CfnOutput
 )
 from dotenv import load_dotenv
 from constructs import Construct
@@ -70,4 +71,11 @@ class ApiGatewayBedrockIpRegistrationStack(Stack):
             principals=[iam.AnyPrincipal()],
             conditions={"NotIpAddress": {"aws:SourceIp": allowed_ip_v6}}
         )
+        
         api.policy = iam.PolicyDocument(statements=[api_policy, api_policy_deny])
+        CfnOutput(
+            self, "ApiUrl",
+            value=api.url,
+            description="API Gateway endpoint URL",
+            export_name="OpenAIProxyUrl"
+        )

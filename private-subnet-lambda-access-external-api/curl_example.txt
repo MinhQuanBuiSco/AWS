@@ -1,0 +1,3 @@
+curl -X POST https://i8udb7son2.execute-api.ap-northeast-1.amazonaws.com/prod/invoke \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Hello"}'
