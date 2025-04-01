@@ -48,7 +48,7 @@ cdk bootstrap
 cdk deploy
 ```
 
-<!-- ## 📬 API Usage
+## 📬 API Usage
 
 Once deployed, you’ll get an output like:
 ```bash
@@ -60,4 +60,4 @@ To call your Lambda via API Gateway:
 curl -X POST https://xxxxxxxxxx.execute-api.region.amazonaws.com/prod/invoke \
   -H "Content-Type: application/json" \
   -d '{"message": "Hello OpenAI"}'
-``` -->
+```
