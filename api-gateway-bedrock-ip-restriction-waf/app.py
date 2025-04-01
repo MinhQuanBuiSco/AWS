@@ -3,11 +3,11 @@ import os
 
 import aws_cdk as cdk
 
-from api_gateway_bedrock_ip_registration_waf.api_gateway_bedrock_ip_registration_waf_stack import ApiGatewayBedrockIpRegistrationWafStack
+from api_gateway_bedrock_ip_restriction_waf.api_gateway_bedrock_ip_restriction_waf_stack import ApiGatewayBedrockIpRegstrictionWafStack
 
 
 app = cdk.App()
-ApiGatewayBedrockIpRegistrationWafStack(app, "ApiGatewayBedrockIpRegistrationWafStack",
+ApiGatewayBedrockIpRegstrictionWafStack(app, "ApiGatewayBedrockIpRegistrationWafStack",
     # If you don't specify 'env', this stack will be environment-agnostic.
     # Account/Region-dependent features and context lookups will not work,
     # but a single synthesized template can be deployed anywhere.
