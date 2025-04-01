@@ -23,7 +23,9 @@ This stack creates the following resources:
 - A valid IPv6 address (you can find yours here: https://whatismyipaddress.com)
 - A `.env` file in your project root
 
-### .env_example (remove _example for deploying)
+---
+
+### ⚙️ .env_example (remove _example for deploying)
 YOUR_IP_ADDRESS=2001:0db8:85a3:0000:0000:8a2e:0370:7334
 
 ---
@@ -89,7 +91,7 @@ Only the IPv6 address you provide in your `.env` file (e.g. `YOUR_IP_ADDRESS=200
 }
 ```
 
-### ❌Deny: Everyone Else
+### ❌ Deny: Everyone Else
 ```json
 {
   "Effect": "Deny",
