@@ -33,21 +33,27 @@ OPENAI_API_KEY=your-openai-api-key-here
 ---
 
 # Install dependencies
+
+```bash
 pip install -r requirements.txt
-
+```
 # Bootstrap CDK (if not already)
+
+```bash
 cdk bootstrap
-
+```
 # Deploy the stack
-cdk deploy
 
+```bash
+cdk deploy
+```
 
 ## 📬 API Usage
 
 Once deployed, you’ll get an output like:
-
+```bash
 https://xxxxxxxxxx.execute-api.region.amazonaws.com/prod/
-
+```
 To call your Lambda via API Gateway:
 
 ```bash
