@@ -1,6 +1,9 @@
 # 🛠️ Private Subnet Lambda to External API via API Gateway
 
-This AWS CDK project deploys a Lambda function inside a **private subnet** that securely accesses external APIs (e.g., OpenAI) via a **NAT Gateway**. It exposes the Lambda via a **public REST API Gateway** with no authorization (can be restricted further).
+This AWS CDK project deploys a Lambda function inside a **private subnet** that securely accesses external APIs (e.g., OpenAI) via a **NAT Gateway**. It exposes the Lambda via a **public REST API Gateway** with no authorization (can be 
+restricted further).
+
+![private-subnet-lambda-access-external-api](./private-subnet-lambda-access-external-api.png)
 
 ---
 
