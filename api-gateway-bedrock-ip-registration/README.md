@@ -1,58 +1,107 @@
+# 🚀 Amazon API Gateway + Lambda + Bedrock (Claude 3.5 Sonnet) — CDK Deployment
 
-# Welcome to your CDK Python project!
+This AWS CDK project deploys a REST API using **Amazon API Gateway** that invokes **Amazon Bedrock’s Claude 3.5 Sonnet** via an **AWS Lambda** function. The API is securely restricted to your own **IPv6 address** using API Gateway resource policies.
 
-This is a blank project for CDK development with Python.
+---
 
-The `cdk.json` file tells the CDK Toolkit how to execute your app.
+## 📐 Architecture Overview
 
-This project is set up like a standard Python project.  The initialization
-process also creates a virtualenv within this project, stored under the `.venv`
-directory.  To create the virtualenv it assumes that there is a `python3`
-(or `python` for Windows) executable in your path with access to the `venv`
-package. If for any reason the automatic creation of the virtualenv fails,
-you can create the virtualenv manually.
+This stack creates the following resources:
 
-To manually create a virtualenv on MacOS and Linux:
+- 🟦 **API Gateway** with a `/invoke` POST endpoint
+- 🟨 **Lambda Function** (Python 3.12) that calls Amazon Bedrock
+- 🛡️ **IAM Role** with permissions to invoke Bedrock models
+- 🔐 **Resource Policy** to restrict API access to a specific IPv6 address
 
+---
+
+## 🧾 Requirements
+
+- Python 3.12+
+- AWS CDK v2
+- AWS CLI (with configured credentials)
+- A valid IPv6 address (you can find yours here: https://whatismyipaddress.com)
+- A `.env` file in your project root
+
+### .env_example (remove _example for deploying)
+YOUR_IP_ADDRESS=2001:0db8:85a3:0000:0000:8a2e:0370:7334
+
+---
+
+## ⚙️ CDK Stack Highlights (`api_gateway_bedrock_ip_registration_stack.py`)
+
+- **Lambda Function** (Python 3.12) configured with model ID and region via environment variables.
+- **IAM Policy** allows Bedrock model invocation.
+- **API Gateway** endpoint `/invoke` integrates the Lambda.
+- **Resource Policy**:
+  - ✅ Allow: Your IPv6 only
+  - ❌ Deny: Everyone else
+
+---
+
+## 🌍 Environment Variables for Lambda
+
+These are injected into the Lambda during deployment:
+
+| Variable        | Description                                      |
+|----------------|--------------------------------------------------|
+| `MODEL_ID`      | Bedrock model ID (e.g. `anthropic.claude-3-5-sonnet-20240620-v1:0`) |
+| `BEDROCK_REGION` | AWS region where Bedrock is available (e.g. `ap-northeast-1`) |
+
+---
+
+## 📦 Install & Deploy
+
+1. **Install dependencies**
+
+```bash
+pip install -r requirements.txt
 ```
-$ python3 -m venv .venv
+
+2. **Bootstrap CDK (if first time)**
+```bash
+cdk bootstrap
 ```
 
-After the init process completes and the virtualenv is created, you can use the following
-step to activate your virtualenv.
-
-```
-$ source .venv/bin/activate
+2. **Deploy the stack**:
+```bash
+cdk deploy
 ```
 
-If you are a Windows platform, you would activate the virtualenv like this:
+## 🛡️ IP Restriction with API Gateway
 
+To protect your API Gateway endpoint from unauthorized access, this stack uses **resource-based policies** to restrict access to a specific **IPv6 address**.
+
+### ✅ Allow: Your IP Address
+Only the IPv6 address you provide in your `.env` file (e.g. `YOUR_IP_ADDRESS=2001:db8::1234`) is allowed to invoke the API:
+
+```json
+{
+  "Effect": "Allow",
+  "Principal": "*",
+  "Action": "execute-api:Invoke",
+  "Resource": "*",
+  "Condition": {
+    "IpAddress": {
+      "aws:SourceIp": "YOUR_IPV6/128"
+    }
+  }
+}
 ```
-% .venv\Scripts\activate.bat
+
+### ❌Deny: Everyone Else
+```json
+{
+  "Effect": "Deny",
+  "Principal": "*",
+  "Action": "execute-api:Invoke",
+  "Resource": "*",
+  "Condition": {
+    "NotIpAddress": {
+      "aws:SourceIp": "YOUR_IPV6/128"
+    }
+  }
+}
 ```
 
-Once the virtualenv is activated, you can install the required dependencies.
-
-```
-$ pip install -r requirements.txt
-```
-
-At this point you can now synthesize the CloudFormation template for this code.
-
-```
-$ cdk synth
-```
-
-To add additional dependencies, for example other CDK libraries, just add
-them to your `setup.py` file and rerun the `pip install -r requirements.txt`
-command.
-
-## Useful commands
-
- * `cdk ls`          list all stacks in the app
- * `cdk synth`       emits the synthesized CloudFormation template
- * `cdk deploy`      deploy this stack to your default AWS account/region
- * `cdk diff`        compare deployed stack with current state
- * `cdk docs`        open CDK documentation
-
-Enjoy!
+This two-policy combination ensures that only your network can access the API.

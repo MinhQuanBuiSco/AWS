@@ -11,7 +11,7 @@ You'll find templates for **serverless apps**, **AI-powered APIs**, **secure arc
 
 | Example | Description |
 |--------|-------------|
-| [`bedrock-api-gateway-lambda`](./bedrock-api-gateway-lambda) | REST API Gateway with Lambda calling Amazon Bedrock (Claude/Sonnet) and IP whitelist |
+| [`    -api-gateway-lambda`](./bedrock-api-gateway-lambda) | REST API Gateway with Lambda calling Amazon Bedrock (Claude/Sonnet) and IP whitelist |
 | [`llm-agent-rag-solution`](./llm-agent-rag-solution) | LLM Agent using Retrieval-Augmented Generation with OpenSearch |
 | [`secure-s3-presigned-url`](./secure-s3-presigned-url) | Generate secure pre-signed S3 URLs with IAM permission boundaries |
 | [`lambda-dynamodb-api`](./lambda-dynamodb-api) | CRUD API using API Gateway + Lambda + DynamoDB |
@@ -43,8 +43,8 @@ You'll find templates for **serverless apps**, **AI-powered APIs**, **secure arc
 
 I'm an **AI researcher and AWS cloud architect**, currently focused on LLM applications and secure cloud infrastructure.
 
-> 🔗 [Portfolio Website](https://yourwebsite.com)  
-> 📬 your.email@example.com  
+<!-- > 🔗 [Portfolio Website](https://yourwebsite.com)   -->
+> 📬 quanbm2710@gmail.com
 > 💼 [LinkedIn](https://linkedin.com/in/yourname)
 
 ---
