@@ -16,7 +16,7 @@ def handler(event, context):
 
         # Parse the input (assuming JSON body)
         input_data = json.loads(body) if isinstance(body, str) else body
-        user_prompt = input_data.get('prompt', 'Generate a short response')
+        user_prompt = input_data.get('user_prompt', 'Generate a short response')
         system_prompt = input_data.get('system_prompt', 'You are a helpful assistant.')
 
         # Invoke Bedrock model using converse API (Sonnet 3.5)

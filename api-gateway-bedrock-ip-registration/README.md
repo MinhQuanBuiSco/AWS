@@ -107,3 +107,20 @@ Only the IPv6 address you provide in your `.env` file (e.g. `YOUR_IP_ADDRESS=200
 ```
 
 This two-policy combination ensures that only your network can access the API.
+
+## 📬 API Usage
+
+Once deployed, you’ll get an output like:
+```bash
+https://xxxxxxxxxx.execute-api.region.amazonaws.com/prod/
+```
+To call your Lambda via API Gateway:
+
+```bash
+curl -X POST https://your-api-id.execute-api.your-region.amazonaws.com/prod/invoke \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_prompt": "What is the capital of France?",
+    "system_prompt": "You are a geography expert."
+}'
+```
