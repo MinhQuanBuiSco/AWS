@@ -1,58 +1,57 @@
+# 🛠️ Private Subnet Lambda to External API via API Gateway
 
-# Welcome to your CDK Python project!
+This AWS CDK project deploys a Lambda function inside a **private subnet** that securely accesses external APIs (e.g., OpenAI) via a **NAT Gateway**. It exposes the Lambda via a **public REST API Gateway** with no authorization (can be restricted further).
 
-This is a blank project for CDK development with Python.
+---
 
-The `cdk.json` file tells the CDK Toolkit how to execute your app.
+## 📦 Stack Components
 
-This project is set up like a standard Python project.  The initialization
-process also creates a virtualenv within this project, stored under the `.venv`
-directory.  To create the virtualenv it assumes that there is a `python3`
-(or `python` for Windows) executable in your path with access to the `venv`
-package. If for any reason the automatic creation of the virtualenv fails,
-you can create the virtualenv manually.
+### ✅ VPC
+- 2 Availability Zones
+- 1 **Public Subnet** (for NAT Gateway)
+- 1 **Private Subnet with Egress** (for Lambda)
 
-To manually create a virtualenv on MacOS and Linux:
+### ✅ NAT Gateway
+- Allows the Lambda in a private subnet to call external APIs (e.g., OpenAI).
 
-```
-$ python3 -m venv .venv
-```
+### ✅ Lambda Function
+- Located in **Private Subnet**
+- Uses security group allowing HTTPS (port 443) outbound
+- Bundles dependencies with `requirements.txt`
+- Environment variable `OPENAI_API_KEY` is loaded from `.env`
 
-After the init process completes and the virtualenv is created, you can use the following
-step to activate your virtualenv.
+### ✅ API Gateway
+- Exposes a public `POST /invoke` endpoint
+- Directly integrated with Lambda
+- No auth (for now)
 
-```
-$ source .venv/bin/activate
-```
-
-If you are a Windows platform, you would activate the virtualenv like this:
-
-```
-% .venv\Scripts\activate.bat
-```
-
-Once the virtualenv is activated, you can install the required dependencies.
-
-```
-$ pip install -r requirements.txt
+> 🔐 `.env` should contain:
+```env
+OPENAI_API_KEY=your-openai-api-key-here
 ```
 
-At this point you can now synthesize the CloudFormation template for this code.
+---
 
+# Install dependencies
+pip install -r requirements.txt
+
+# Bootstrap CDK (if not already)
+cdk bootstrap
+
+# Deploy the stack
+cdk deploy
+
+
+## 📬 API Usage
+
+Once deployed, you’ll get an output like:
+
+https://xxxxxxxxxx.execute-api.region.amazonaws.com/prod/
+
+To call your Lambda via API Gateway:
+
+```bash
+curl -X POST https://xxxxxxxxxx.execute-api.region.amazonaws.com/prod/invoke \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Hello OpenAI"}'
 ```
-$ cdk synth
-```
-
-To add additional dependencies, for example other CDK libraries, just add
-them to your `setup.py` file and rerun the `pip install -r requirements.txt`
-command.
-
-## Useful commands
-
- * `cdk ls`          list all stacks in the app
- * `cdk synth`       emits the synthesized CloudFormation template
- * `cdk deploy`      deploy this stack to your default AWS account/region
- * `cdk diff`        compare deployed stack with current state
- * `cdk docs`        open CDK documentation
-
-Enjoy!
