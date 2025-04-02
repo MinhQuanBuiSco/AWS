@@ -27,7 +27,9 @@ class PipelineStack(Stack):
                 "cd api-gateway-bedrock-ip-restriction-waf-codepipeline",
                 "pip install -r requirements.txt",
                 "npm install -g aws-cdk",
-                "cdk synth"
+                "cdk synth",
+                "ls -la",  # Add this to check the directory contents
+                "pwd"
             ],
             primary_output_directory="api-gateway-bedrock-ip-restriction-waf-codepipeline/cdk.out"
         )
