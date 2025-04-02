@@ -2,7 +2,7 @@
 
 This AWS CDK project deploys a REST API using **Amazon API Gateway** that invokes **Amazon Bedrock’s Claude 3.5 Sonnet** via an **AWS Lambda** function. The API is securely restricted to your own **IPv6 address** using API Gateway resource policies.
 
-![api-gateway-bedrock-ip-registration](./api-gateway-bedrock-ip-registration.png)
+![api-gateway-bedrock-ip-registration](./api-gateway-bedrock-ip-restriction.png)
 
 ---
 
