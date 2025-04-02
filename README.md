@@ -45,6 +45,7 @@ I'm an **AI researcher and AWS cloud architect**, currently focused on LLM appli
 
 <!-- > 🔗 [Portfolio Website](https://yourwebsite.com)   -->
 > 📬 quanbm2710@gmail.com
+
 > 💼 [LinkedIn](https://linkedin.com/in/yourname)
 
 ---
