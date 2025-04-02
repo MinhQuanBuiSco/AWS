@@ -24,11 +24,12 @@ class PipelineStack(Stack):
             "Synth",
             input=source,
             commands=[
-                "pip install -r api-gateway-bedrock-ip-restriction-waf-codepipeline/requirements.txt",
+                "cd api-gateway-bedrock-ip-restriction-waf-codepipeline",
+                "pip install -r requirements.txt",
                 "npm install -g aws-cdk",
-                "cdk synth -o api-gateway-bedrock-ip-restriction-waf-codepipeline/cdk.out"
-            ],
-            primary_output_directory="api-gateway-bedrock-ip-restriction-waf-codepipeline/cdk.out"
+                "cdk synth",
+                "mv cdk.out ../" 
+            ]
         )
 
         # Pipeline
