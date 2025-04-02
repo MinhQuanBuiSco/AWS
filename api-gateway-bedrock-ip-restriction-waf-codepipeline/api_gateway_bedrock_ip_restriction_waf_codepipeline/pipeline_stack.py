@@ -22,17 +22,11 @@ class PipelineStack(Stack):
         synth_step = pipelines.ShellStep(
             "Synth",
             input=source,
-            install_commands=[
-                "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash",
-                ". ~/.nvm/nvm.sh",
-                "nvm install 20",
-                "nvm use 20",
-                "node -v",
-            ],
             commands=[
                 "cd api-gateway-bedrock-ip-restriction-waf-codepipeline",
                 "pip install -r requirements.txt",
                 "npm install -g aws-cdk",  # optional if CDK not in PATH
+                "if [ -f .env ]; then export $(cat .env | xargs); fi",
                 "cdk synth"
             ]
         )
