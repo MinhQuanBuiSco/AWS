@@ -18,7 +18,8 @@ class ApiGatewayBedrockIpRestrictionWafStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        allowed_ip_v6 = os.getenv("YOUR_IP_ADDRESS") + "/128"  # e.g. 2001:db8::/128
+        # allowed_ip_v6 = os.getenv("YOUR_IP_ADDRESS") + "/128"  # e.g. 2001:db8::/128
+        allowed_ip_v6 = self.node.try_get_context("allowed_ip") + "/128"
 
         # Lambda function to call Bedrock
         sonnet_fn = _lambda.Function(

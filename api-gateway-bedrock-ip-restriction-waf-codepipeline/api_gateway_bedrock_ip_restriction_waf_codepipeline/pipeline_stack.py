@@ -2,7 +2,8 @@ from aws_cdk import (
     Stack,
     pipelines,
     SecretValue,
-    Stage
+    Stage,
+    aws_iam as iam
 )
 from constructs import Construct
 from api_gateway_bedrock_ip_restriction_waf_codepipeline.api_gateway_bedrock_ip_restriction_waf_stack import ApiGatewayBedrockIpRestrictionWafStack
@@ -25,9 +26,15 @@ class PipelineStack(Stack):
             commands=[
                 "cd api-gateway-bedrock-ip-restriction-waf-codepipeline",
                 "pip install -r requirements.txt",
-                "npm install -g aws-cdk",  # optional if CDK not in PATH
-                "if [ -f .env ]; then export $(cat .env | xargs); fi",
-                "cdk synth"
+                "npm install -g aws-cdk",
+                "export IP_ADDRESS=$(aws secretsmanager get-secret-value --secret-id ip-address --query SecretString --output text)",
+                "cdk synth --context allowed_ip=$IP_ADDRESS"
+            ],
+            role_policy_statements=[
+                iam.PolicyStatement(
+                    actions=["secretsmanager:GetSecretValue"],
+                    resources=["*"]
+                )
             ]
         )
 
