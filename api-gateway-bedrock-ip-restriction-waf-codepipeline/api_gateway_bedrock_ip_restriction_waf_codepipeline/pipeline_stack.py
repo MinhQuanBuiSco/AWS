@@ -28,8 +28,8 @@ class PipelineStack(Stack):
                 "pip install -r requirements.txt",
                 "npm install -g aws-cdk",
                 "cdk synth",
-                "mv cdk.out ../" 
-            ]
+            ],
+            primary_output_directory="cdk.out",
         )
 
         # Pipeline
