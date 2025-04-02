@@ -1,16 +1,14 @@
-# 🚀 Secure Bedrock API with AWS CDK (Python)
+# AWS CDK API Gateway with Bedrock IP Restriction WAF
 
-This project deploys a secure **REST API** on **Amazon API Gateway** integrated with **AWS Lambda** that invokes a **Claude 3.5 Sonnet model on Amazon Bedrock**. Access is restricted to your own IP address using **AWS WAF (Web Application Firewall)** with IPv6 support.
+This project sets up an AWS infrastructure using AWS CDK to create an API Gateway that integrates with AWS Bedrock, restricts access via IP filtering using WAF (Web Application Firewall), and deploys the infrastructure through a CI/CD pipeline.
 
 ## 📦 Architecture Overview
 
-- 🔐 **Amazon API Gateway**: Hosts a `POST /invoke` endpoint.
-- 🧠 **AWS Lambda**: Handles requests and calls Amazon Bedrock with Sonnet 3.5.
-- ⚙️ **Amazon Bedrock**: Anthropic Claude 3.5 Sonnet (June 2024 release).
-- 🌐 **AWS WAF**: Restricts API access to your IPv6 address using a Web ACL.
-
-![api-gateway-bedrock-ip-restriction-waf](./api-gateway-bedrock-ip-restriction-waf.png)
-
+- 🔐 **Amazon API Gateway**: Hosts the `POST /invoke` endpoint.  
+- 🧠 **AWS Lambda**: Handles requests and invokes Amazon Bedrock with Claude 3.5 Sonnet.  
+- ⚙️ **Amazon Bedrock**: Runs Anthropic Claude 3.5 Sonnet (June 2024 release).  
+- 🌐 **AWS WAF**: Restricts API access to your IPv6 address using a Web ACL.  
+- 🚀 **AWS CodePipeline**: Provides CI/CD functionality using AWS CodePipeline.
 
 ---
 
@@ -25,21 +23,31 @@ Before deploying, ensure you have:
 
 ### 📄 `.env` example:
 ```bash
-YOUR_IP_ADDRESS=2001:db8:abcd:0012::1
+YOUR_IP_ADDRESS=2001:db8:abcd:0012::1/128
+GITHUB_TOKEN=ghp...
 ```
 ---
 
+
 ## 🚀 Deploy the Stack
 
+1. Install dependencies:
+Ensure you have the required Python packages and CDK. Run:
+
 ```bash
-# Install dependencies
-pip install -r requirements.txt
+  pip install -r requirements.txt
+```
 
-# Bootstrap your environment (if first time)
-cdk bootstrap
+2. Generate Secret and Parmeter Store:
 
-# Deploy the stack
-cdk deploy
+```bash
+  bash generate_github_secret.sh
+```
+
+## Deployment
+
+```bash
+  cdk deploy
 ```
 
 ---
