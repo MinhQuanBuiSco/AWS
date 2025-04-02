@@ -9,8 +9,8 @@ This project deploys a secure **REST API** on **Amazon API Gateway** integrated 
 - ⚙️ **Amazon Bedrock**: Anthropic Claude 3.5 Sonnet (June 2024 release).
 - 🌐 **AWS WAF**: Restricts API access to your IPv6 address using a Web ACL.
 
-![Architecture Diagram](https://user-images.githubusercontent.com/your_image_placeholder.png)
-> *Diagram optional — you can add one for clarity*
+![api-gateway-bedrock-ip-restriction-waf](./api-gateway-bedrock-ip-restriction-waf.png)
+
 
 ---
 

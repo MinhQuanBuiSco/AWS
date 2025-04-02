@@ -2,6 +2,8 @@
 
 This project provisions a real-time Hugging Face model inference endpoint using AWS CDK. It integrates with Amazon SageMaker, S3, and Auto Scaling to deliver efficient and cost-effective model deployment.
 
+![huggingface-sagemaker](./huggingface-sagemaker.png)
+
 ---
 
 ## 📦 Stack Overview
