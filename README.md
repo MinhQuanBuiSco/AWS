@@ -62,4 +62,9 @@ MIT License
 
 > If this repository helped you, please consider ⭐️ starring it!
 
-☕ [Support me on Ko-fi](https://ko-fi.com/buiminhquan)
+---
+
+If you find this project helpful, consider supporting me on Ko-fi!  
+<a href="https://ko-fi.com/buiminhquan" target="_blank">
+  <img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Support me on Ko-fi" />
+</a>
