@@ -30,12 +30,12 @@ class PipelineStack(Stack):
                 "export IP_ADDRESS=$(aws secretsmanager get-secret-value --secret-id ip-address --query SecretString --output text)",
                 "cdk synth --context allowed_ip=$IP_ADDRESS"
             ],
-            role_policy_statements=[
-                iam.PolicyStatement(
-                    actions=["secretsmanager:GetSecretValue"],
-                    resources=["*"]
-                )
-            ]
+            # role_policy_statements=[
+            #     iam.PolicyStatement(
+            #         actions=["secretsmanager:GetSecretValue"],
+            #         resources=["*"]
+            #     )
+            # ]
         )
 
         # Pipeline
