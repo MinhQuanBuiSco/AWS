@@ -61,3 +61,5 @@ MIT License
 ---
 
 > If this repository helped you, please consider ⭐️ starring it!
+
+☕ [Support me on Ko-fi](https://ko-fi.com/buiminhquan)
