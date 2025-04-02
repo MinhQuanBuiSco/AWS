@@ -28,6 +28,7 @@ class PipelineStack(Stack):
                 "pip install -r requirements.txt",
                 "npm install -g aws-cdk",
                 "export IP_ADDRESS=$(aws secretsmanager get-secret-value --secret-id ip-address --query SecretString --output text)",
+                "echo $IP_ADDRESS",
                 "cdk synth --context allowed_ip=$IP_ADDRESS"
             ],
             # role_policy_statements=[
