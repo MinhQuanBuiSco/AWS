@@ -5,6 +5,7 @@ from aws_cdk import (
     aws_apigateway as apigw,
     aws_iam as iam,
     aws_wafv2 as wafv2,
+    aws_ssm as ssm,
     CfnOutput,
 )
 from dotenv import load_dotenv
@@ -18,8 +19,10 @@ class ApiGatewayBedrockIpRestrictionWafStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        # allowed_ip_v6 = os.getenv("YOUR_IP_ADDRESS") + "/128"  # e.g. 2001:db8::/128
-        allowed_ip_v6 = self.node.try_get_context("allowed_ip") + "/128"
+        ip_param = ssm.StringParameter.from_string_parameter_name(
+            self, "MyIPParam", "/my/ip"
+        )
+        allowed_ip_v6 = ip_param.string_value
 
         # Lambda function to call Bedrock
         sonnet_fn = _lambda.Function(
