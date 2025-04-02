@@ -7,9 +7,7 @@ from api_gateway_bedrock_ip_restriction_waf_codepipeline.api_gateway_bedrock_ip_
 from api_gateway_bedrock_ip_restriction_waf_codepipeline.pipeline_stack import PipelineStack
 
 app = cdk.App()
-app_stack = ApiGatewayBedrockIpRestrictionWafStack(app, "ApiGatewayBedrockIpRestrictionWafStack")
 
-
-PipelineStack(app, "BedrockApiPipelineStack", cdk_app_stack=app_stack)
+PipelineStack(app, "BedrockApiPipelineStack", env=cdk.Environment(account=os.getenv("CDK_DEFAULT_ACCOUNT"), region=os.getenv("CDK_DEFAULT_REGION")))
 
 app.synth()
