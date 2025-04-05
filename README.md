@@ -17,7 +17,7 @@ You'll find templates for **serverless apps**, **AI-powered APIs**, **secure arc
 | [`private-subnet-lambda-access-external-api`](./private-subnet-lambda-access-external-api) | Lambda in private subnet invokes external API | ![private-subnet-lambda-access-external-api-image](./private-subnet-lambda-access-external-api/private-subnet-lambda-access-external-api.png) |
 | [`huggingface-sagemaker`](./huggingface-sagemaker) | Real-time Hugging Face model inference endpoint using AWS CDK. It integrates with Amazon SageMaker, S3, and Auto Scaling to deliver efficient and cost-effective model deployment. | ![huggingface-sagemaker-image](./huggingface-sagemaker/huggingface-sagemaker.png) |
 | [`api-gateway-bedrock-ip-restriction-waf-codepipeline`](./api-gateway-bedrock-ip-restriction-waf-codepipeline) | REST API Gateway with Lambda calling Amazon Bedrock (Claude/Sonnet) and IP whitelist using WAF + AWS CopePipeline for CICD |  |
-| [`step_function_workflow`](.step_function_workflow) | REST API Gateway with Lambda calling Amazon Bedrock (Claude/Sonnet) and IP whitelist using WAF + AWS CopePipeline for CICD |![step_function_workflow](./step_function_workflow-image/step_function_workflow.png) |
+| [`step_function_workflow`](.step_function_workflow) | REST API Gateway with Lambda calling Amazon Bedrock (Claude/Sonnet) and IP whitelist using WAF + AWS CopePipeline for CICD |![step_function_workflow-image](./step_function_workflow/step_function_workflow.png) |
 
 ---
 
