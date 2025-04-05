@@ -53,7 +53,7 @@ I'm an **AI researcher and AWS cloud architect**, currently focused on LLM appli
 
 ## ⭐️ Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=your-username/aws-solutions-hub&type=Date)](https://star-history.com/#your-username/aws-solutions-hub&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=your-username/aws-solutions-hub&type=Date)](https://star-history.com/#MinhQuan/aws-solutions-hub&Date)
 
 ---
 
