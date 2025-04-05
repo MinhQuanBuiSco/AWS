@@ -75,30 +75,33 @@ LoanWorkflowStack.StateMachineArn = arn:aws:states:region:account-id:stateMachin
 }
 ```
 
-#### 🚀 Execute via Console
-Go to AWS Console → Step Functions
+### 🚀 Execute via Console
+    Go to AWS Console → Step Functions
 
-Choose the deployed state machine
+    Choose the deployed state machine
 
-Click Start Execution
+    Click Start Execution
 
-Paste the sample input JSON
+    Paste the sample input JSON
 
-Observe the state transitions
+    Observe the state transitions
 
-#### 🧪 Or via CLI
+### 🧪 Or via CLI
 
+```bash
 aws stepfunctions start-execution \
   --state-machine-arn <your-arn> \
   --input file://test-input.json
+```
 
-#### 🧪 Or boto3
+
+### 🧪 Or boto3
 
 ```bash
 python tests/test_sf.py
 ```
 
-#### ✅ Output Example
+### ✅ Output Example
 
 
 ```json
