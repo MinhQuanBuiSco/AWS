@@ -2,7 +2,7 @@
 
 This AWS CDK project deploys a **serverless loan application processing workflow** using **AWS Step Functions**, **Lambda**, and **Python CDK**. It simulates a real-world approval pipeline with automatic and manual review logic based on credit risk.
 
-<!-- ![loan-application-workflow](./loan-application-workflow.png) -->
+![loan-application-workflow](./step_function_workflow.png)
 
 ---
 
