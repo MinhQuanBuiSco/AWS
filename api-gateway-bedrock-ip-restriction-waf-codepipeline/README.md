@@ -2,6 +2,8 @@
 
 This project sets up an AWS infrastructure using AWS CDK to create an API Gateway that integrates with AWS Bedrock, restricts access via IP filtering using WAF (Web Application Firewall), and deploys the infrastructure through a CI/CD pipeline.
 
+![api-gateway-bedrock-ip-restriction-waf-codepipeline](./api-gateway-bedrock-ip-restriction-waf.png)
+
 ## 📦 Architecture Overview
 
 - 🔐 **Amazon API Gateway**: Hosts the `POST /invoke` endpoint.  
