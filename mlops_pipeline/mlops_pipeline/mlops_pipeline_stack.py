@@ -1,57 +1,114 @@
 from aws_cdk import (
     Stack,
-    Stage,
+    aws_s3 as s3,
     aws_codepipeline as codepipeline,
-    aws_codepipeline_actions as cpactions,
     aws_codebuild as codebuild,
-    aws_secretsmanager as secretsmanager,
-    pipelines as pipelines_,
+    RemovalPolicy, 
+    aws_codepipeline_actions as cpactions,
     SecretValue,
+    aws_iam as iam,
+    Duration,
 )
 from constructs import Construct
-from mlops_pipeline.sagemaker_stack import LlmPipelineStack
 
-class MlopsPipelineStack(Stack):
-
-    def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
+class MLopsPipelineStack(Stack):
+    def __init__(self, scope: Construct, construct_id: str, **kwargs):
         super().__init__(scope, construct_id, **kwargs)
 
-        # GitHub token from Secrets Manager
-        oauth_token = secretsmanager.Secret.from_secret_name_v2(self, "GitHubToken", "github-token")
-
-        # GitHub source
-        source = pipelines_.CodePipelineSource.git_hub(
-            "MinhQuanBuiSco/AWS",  # <-- replace this
-            "main",
-            authentication=SecretValue.secrets_manager("github-token"),  # Store your token in Secrets Manager
-
+        # Create S3 bucket for model artifacts
+        bucket = s3.Bucket(self, "LLMArtifactsBucket",
+            versioned=True,
+            removal_policy=RemovalPolicy.DESTROY,
+            auto_delete_objects=True,
+            block_public_access=s3.BlockPublicAccess.BLOCK_ALL
         )
 
-        # Synth step
-        synth = pipelines_.ShellStep("Synth",
-            input=source,
-            commands=[
-                "cd mlops_pipeline",
-                "npm install -g aws-cdk",
-                "pip install -r requirements.txt",
-                "cdk synth"
-            ],
-            primary_output_directory="mlops_pipeline/cdk.out",
+        s3_bucket = bucket.bucket_name
+        # Create SageMaker execution role
+        sagemaker_role = iam.Role(self, "SageMakerExecutionRole",
+            assumed_by=iam.ServicePrincipal("sagemaker.amazonaws.com"),
+            managed_policies=[
+                iam.ManagedPolicy.from_aws_managed_policy_name("AmazonSageMakerFullAccess"),
+                iam.ManagedPolicy.from_aws_managed_policy_name("AmazonS3FullAccess")
+            ]
         )
 
-        # Pipeline
-        pipeline = pipelines_.CodePipeline(self, "Pipeline", synth=synth)
+        source_output = codepipeline.Artifact()
 
-        # ✅ Add manual approval before training stack is deployed
-        approve_step = pipelines_.ManualApprovalStep("ManualApprovalBeforeTrain")
+        github_source = cpactions.GitHubSourceAction(
+            action_name="GitHub_Source",
+            owner="MinhQuanBuiSco",
+            repo="AWS",
+            branch="main",
+            oauth_token=SecretValue.secrets_manager("github-token"),
+            output=source_output
+        )
 
-        # ✅ Add stage to deploy ML training pipeline stack
+        build_project = codebuild.PipelineProject(
+            self, "LLMTrainEval",
+            build_spec=codebuild.BuildSpec.from_source_filename("buildspecs/buildspec-train-eval.yml"),
+            environment=codebuild.BuildEnvironment(
+                build_image=codebuild.LinuxBuildImage.STANDARD_6_0,
+                privileged=True
+            ),
+            environment_variables={
+                "S3_BUCKET": codebuild.BuildEnvironmentVariable(value=s3_bucket),
+                "SAGEMAKER_ROLE": codebuild.BuildEnvironmentVariable(value=sagemaker_role.role_arn),
+            }
+        )
+
+        deploy_project = codebuild.PipelineProject(
+            self, "LLMDeploy",
+            build_spec=codebuild.BuildSpec.from_source_filename("buildspecs/buildspec-deploy.yml"),
+            environment=codebuild.BuildEnvironment(
+                build_image=codebuild.LinuxBuildImage.STANDARD_6_0,
+                privileged=True
+            ),
+            environment_variables={
+                "S3_BUCKET": codebuild.BuildEnvironmentVariable(value=s3_bucket),
+                "SAGEMAKER_ROLE": codebuild.BuildEnvironmentVariable(value=sagemaker_role.role_arn),
+            }
+        )
+
+        bucket.grant_read_write(build_project)
+        bucket.grant_read_write(deploy_project)
+
+        pipeline = codepipeline.Pipeline(self, "LLMPipeline")
+
         pipeline.add_stage(
-            LlmPipelineStage(self, "DeployLLMPipeline"),
-            pre=[approve_step]  # ← 👈 pre-hook: this adds the manual gate
+            stage_name="Source",
+            actions=[github_source]
         )
 
-class LlmPipelineStage(Stage):
-    def __init__(self, scope: Construct, id: str, **kwargs):
-        super().__init__(scope, id, **kwargs)
-        LlmPipelineStack(self, "LlmPipelineStack")
+        pipeline.add_stage(
+            stage_name="TrainAndEvaluate",
+            actions=[
+                cpactions.CodeBuildAction(
+                    action_name="TrainEvalLLM",
+                    project=build_project,
+                    input=source_output,
+                    outputs=[codepipeline.Artifact()]
+                )
+            ]
+        )
+
+        pipeline.add_stage(
+            stage_name="ManualApproval",
+            actions=[
+                cpactions.ManualApprovalAction(
+                    action_name="ApproveDeploy",
+                    additional_information="Check S3 or CloudWatch Logs for eval results."
+                )
+            ]
+        )
+
+        pipeline.add_stage(
+            stage_name="Deploy",
+            actions=[
+                cpactions.CodeBuildAction(
+                    action_name="DeployLLM",
+                    project=deploy_project,
+                    input=source_output,
+                )
+            ]
+        )
