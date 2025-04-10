@@ -1,9 +1,0 @@
-version: 0.2
-phases:
-  install:
-    commands:
-      - pip install boto3 sagemaker transformers datasets
-  build:
-    commands:
-      - python sagemaker_job/train_llm.py
-      - python sagemaker_job/evaluate_llm.py

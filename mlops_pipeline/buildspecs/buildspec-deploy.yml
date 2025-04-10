@@ -1,8 +1,0 @@
-version: 0.2
-phases:
-  install:
-    commands:
-      - pip install boto3 sagemaker transformers
-  build:
-    commands:
-      - python sagemaker_job/deploy_llm.py

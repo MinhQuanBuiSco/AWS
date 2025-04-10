@@ -1,24 +1,23 @@
-from transformers import AutoTokenizer, AutoModelForCausalLM
+from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
+from ts.torch_handler.base_handler import BaseHandler
 
-def model_fn(model_dir):
-    model = AutoModelForCausalLM.from_pretrained(model_dir)
-    tokenizer = AutoTokenizer.from_pretrained(model_dir)
-    return {"model": model, "tokenizer": tokenizer}
+class Handler(BaseHandler):
+    def initialize(self, context):
+        self.model = AutoModelForCausalLM.from_pretrained('facebook/opt-125m')
+        self.tokenizer = AutoTokenizer.from_pretrained('facebook/opt-125m')
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.model.to(self.device)
 
-def predict_fn(data, model_artifacts):
-    tokenizer = model_artifacts["tokenizer"]
-    model = model_artifacts["model"]
+    def preprocess(self, data):
+        text = data[0]['data']
+        inputs = self.tokenizer(text, return_tensors='pt').to(self.device)
+        return inputs
 
-    inputs = tokenizer(data["inputs"], return_tensors="pt")
-    outputs = model.generate(**inputs, max_new_tokens=50)
-    result = tokenizer.decode(outputs[0], skip_special_tokens=True)
-    return {"generated_text": result}
+    def inference(self, inputs):
+        with torch.no_grad():
+            outputs = self.model.generate(**inputs, max_length=50)
+        return [self.tokenizer.decode(output, skip_special_tokens=True) for output in outputs]
 
-def input_fn(request_body, content_type):
-    import json
-    return json.loads(request_body)
-
-def output_fn(prediction, content_type):
-    import json
-    return json.dumps(prediction)
+    def postprocess(self, inference_output):
+        return inference_output

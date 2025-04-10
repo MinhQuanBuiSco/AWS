@@ -1,14 +1,16 @@
 from aws_cdk import (
     Stack,
     aws_s3 as s3,
-    aws_codepipeline as codepipeline,
-    aws_codebuild as codebuild,
     RemovalPolicy, 
-    aws_codepipeline_actions as cpactions,
     SecretValue,
     aws_iam as iam,
-    Duration,
+    pipelines,
+    SecretValue
 )
+
+from aws_cdk.aws_codepipeline import Artifact
+from aws_cdk.aws_codepipeline_actions import GitHubSourceAction
+from aws_cdk.aws_codebuild import BuildSpec, LinuxBuildImage, Project
 from constructs import Construct
 
 class MLopsPipelineStack(Stack):
@@ -16,14 +18,13 @@ class MLopsPipelineStack(Stack):
         super().__init__(scope, construct_id, **kwargs)
 
         # Create S3 bucket for model artifacts
-        bucket = s3.Bucket(self, "LLMArtifactsBucket",
+        model_bucket = s3.Bucket(self, "LLMArtifactsBucket",
             versioned=True,
             removal_policy=RemovalPolicy.DESTROY,
             auto_delete_objects=True,
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL
         )
 
-        s3_bucket = bucket.bucket_name
         # Create SageMaker execution role
         sagemaker_role = iam.Role(self, "SageMakerExecutionRole",
             assumed_by=iam.ServicePrincipal("sagemaker.amazonaws.com"),
@@ -33,82 +34,121 @@ class MLopsPipelineStack(Stack):
             ]
         )
 
-        source_output = codepipeline.Artifact()
+        # Source artifact (from GitHub)
+        source_artifact = Artifact()
 
-        github_source = cpactions.GitHubSourceAction(
-            action_name="GitHub_Source",
-            owner="MinhQuanBuiSco",
-            repo="AWS",
-            branch="main",
-            oauth_token=SecretValue.secrets_manager("github-token"),
-            output=source_output
+        # Source action (pull from GitHub)
+        source = pipelines.CodePipelineSource.git_hub(
+            "MinhQuanBuiSco/AWS",  # Replace with your repo
+            "main",  # Branch
+            authentication=SecretValue.secrets_manager("github-token"),  # Store your token in Secrets Manager
         )
 
-        build_project = codebuild.PipelineProject(
-            self, "LLMTrainEval",
-            build_spec=codebuild.BuildSpec.from_source_filename("buildspecs/buildspec-train-eval.yml"),
-            environment=codebuild.BuildEnvironment(
-                build_image=codebuild.LinuxBuildImage.STANDARD_6_0,
-                privileged=True
-            ),
-            environment_variables={
-                "S3_BUCKET": codebuild.BuildEnvironmentVariable(value=s3_bucket),
-                "SAGEMAKER_ROLE": codebuild.BuildEnvironmentVariable(value=sagemaker_role.role_arn),
-            }
+        # Synth action (build the CDK app)
+        synth_step = pipelines.ShellStep(
+            "Synth",
+            input=source,
+            commands=[
+                "cd mlops_pipeline",
+                "pip install -r requirements.txt",
+                "npm install -g aws-cdk",
+                "cdk synth",
+            ],
+            primary_output_directory="mlops_pipeline/cdk.out",
         )
 
-        deploy_project = codebuild.PipelineProject(
-            self, "LLMDeploy",
-            build_spec=codebuild.BuildSpec.from_source_filename("buildspecs/buildspec-deploy.yml"),
-            environment=codebuild.BuildEnvironment(
-                build_image=codebuild.LinuxBuildImage.STANDARD_6_0,
-                privileged=True
-            ),
-            environment_variables={
-                "S3_BUCKET": codebuild.BuildEnvironmentVariable(value=s3_bucket),
-                "SAGEMAKER_ROLE": codebuild.BuildEnvironmentVariable(value=sagemaker_role.role_arn),
-            }
-        )
+        # Define the pipeline
+        pipeline = pipelines.CodePipeline(self, "Pipeline", synth=synth_step)
 
-        bucket.grant_read_write(build_project)
-        bucket.grant_read_write(deploy_project)
+        # Grant SageMaker role access to the S3 bucket
+        model_bucket.grant_read_write(sagemaker_role)
 
-        pipeline = codepipeline.Pipeline(self, "LLMPipeline")
-
-        pipeline.add_stage(
-            stage_name="Source",
-            actions=[github_source]
-        )
-
-        pipeline.add_stage(
-            stage_name="TrainAndEvaluate",
+        # Training Stage
+        train_stage = pipeline.add_stage("TrainModel",
             actions=[
-                cpactions.CodeBuildAction(
-                    action_name="TrainEvalLLM",
-                    project=build_project,
-                    input=source_output,
-                    outputs=[codepipeline.Artifact()]
-                )
+                Project(self, "TrainProject",
+                    build_spec=BuildSpec.from_object({
+                        "version": "0.2",
+                        "phases": {
+                            "install": {
+                                "commands": [
+                                    "pip install torch transformers sagemaker datasets"
+                                ]
+                            },
+                            "build": {
+                                "commands": [
+                                    f"python training/train_llm.py --bucket-name {model_bucket.bucket_name}"  # Pass bucket name as argument
+                                ]
+                            }
+                        },
+                        "artifacts": {
+                            "files": ["**/*"]
+                        }
+                    }),
+                    environment={
+                        "build_image": LinuxBuildImage.STANDARD_5_0,
+                        "compute_type": "BUILD_GENERAL1_LARGE"
+                    },
+                    role=sagemaker_role
+                ),
             ]
         )
 
-        pipeline.add_stage(
-            stage_name="ManualApproval",
+        # Evaluation Stage
+        eval_stage = pipeline.add_stage("EvaluateModel",
             actions=[
-                cpactions.ManualApprovalAction(
-                    action_name="ApproveDeploy",
-                    additional_information="Check S3 or CloudWatch Logs for eval results."
-                )
+                Project(self, "EvalProject",
+                    build_spec=BuildSpec.from_object({
+                        "version": "0.2",
+                        "phases": {
+                            "install": {
+                                "commands": [
+                                    "pip install torch transformers datasets boto3"
+                                ]
+                            },
+                            "build": {
+                                "commands": [
+                                    f"python evaluation/evaluate_llm.py --bucket-name {model_bucket.bucket_name}"  # Pass bucket name as argument
+                                ]
+                            }
+                        },
+                        "artifacts": {
+                            "files": ["eval_results.txt"]
+                        }
+                    }),
+                    environment={
+                        "build_image": LinuxBuildImage.STANDARD_5_0,
+                        "compute_type": "BUILD_GENERAL1_LARGE"
+                    },
+                    role=sagemaker_role
+                ),
             ]
         )
 
-        pipeline.add_stage(
-            stage_name="Deploy",
+        # Deployment Stage (to SageMaker)
+        deploy_stage = pipeline.add_stage("DeployModel",
             actions=[
-                cpactions.CodeBuildAction(
-                    action_name="DeployLLM",
-                    project=deploy_project,
-                    input=source_output,
-                )
+                Project(self, "DeployProject",
+                    build_spec=BuildSpec.from_object({
+                        "version": "0.2",
+                        "phases": {
+                            "install": {
+                                "commands": [
+                                    "pip install awscli boto3 sagemaker"
+                                ]
+                            },
+                            "build": {
+                                "commands": [
+                                    f"python deployment/deploy_to_sagemaker.py --model-path s3://{model_bucket.bucket_name}/output/model/ --endpoint-name opt-125m-endpoint --bucket-name {model_bucket.bucket_name}"  # Pass bucket name as argument
+                                ]
+                            }
+                        }
+                    }),
+                    environment={
+                        "build_image": LinuxBuildImage.STANDARD_5_0,
+                        "compute_type": "BUILD_GENERAL1_LARGE"
+                    },
+                    role=sagemaker_role
+                ),
             ]
         )
