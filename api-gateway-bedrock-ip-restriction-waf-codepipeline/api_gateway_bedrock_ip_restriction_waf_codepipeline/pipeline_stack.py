@@ -18,7 +18,7 @@ class PipelineStack(Stack):
             "main",  # Branch
             authentication=SecretValue.secrets_manager("github-token"),  # Store your token in Secrets Manager
         )
-
+        
 
         synth_step = pipelines.ShellStep(
             "Synth",
