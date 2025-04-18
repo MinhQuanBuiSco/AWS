@@ -64,7 +64,7 @@ class AwsEc2CicdExampleStack(Stack):
             self,
             "WebsiteInstance",
             instance_type=ec2.InstanceType("t2.micro"),
-            machine_image=ec2.MachineImage.latest_amazon_linux(),
+            machine_image=ec2.MachineImage.latest_amazon_linux2(),  # Use Amazon Linux 2
             vpc=vpc,
             vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC),
             security_group=security_group,
