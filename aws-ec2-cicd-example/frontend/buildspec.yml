@@ -1,0 +1,18 @@
+version: 0.2
+phases:
+  install:
+    commands:
+      - echo Installing dependencies...
+      - yum install -y aws-cli
+  build:
+    commands:
+      - echo Copying website files to EC2...
+      - aws s3 cp website/ s3://$WEBSITE_BUCKET/ --recursive
+      - aws ssm send-command \
+          --instance-ids $EC2_INSTANCE_ID \
+          --document-name "AWS-RunShellScript" \
+          --parameters '{"commands":["aws s3 cp s3://$WEBSITE_BUCKET/ /usr/share/nginx/html/ --recursive","systemctl restart nginx"]}' \
+          --region $AWS_REGION
+artifacts:
+  files:
+    - website/**/*
