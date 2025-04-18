@@ -4,15 +4,21 @@ phases:
     commands:
       - echo Installing dependencies...
       - yum install -y aws-cli
+  pre_build:
+    commands:
+      - echo Checking frontend directory...
+      - ls -la frontend/ || (echo "Error: frontend/ directory is empty or missing" && exit 1)
   build:
     commands:
-      - echo Copying website files to EC2...
-      - aws s3 cp website/ s3://$WEBSITE_BUCKET/ --recursive
+      - echo Copying website files to S3...
+      - aws s3 sync frontend/ s3://$WEBSITE_BUCKET/ --delete
+      - echo Deploying to EC2...
       - aws ssm send-command \
           --instance-ids $EC2_INSTANCE_ID \
           --document-name "AWS-RunShellScript" \
-          --parameters '{"commands":["aws s3 cp s3://$WEBSITE_BUCKET/ /usr/share/nginx/html/ --recursive","systemctl restart nginx"]}' \
-          --region $AWS_REGION
+          --parameters '{"commands":["aws s3 sync s3://$WEBSITE_BUCKET/ /usr/share/nginx/html/ --delete","if command -v systemctl >/dev/null; then systemctl restart nginx; else service nginx restart || /usr/sbin/nginx; fi"]}' \
+          --region $AWS_REGION \
+          --output text
 artifacts:
   files:
-    - website/**/*
+    - frontend/**/*

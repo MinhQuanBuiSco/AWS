@@ -28,21 +28,27 @@ class AwsEc2CicdExampleStack(Stack):
         security_group.add_ingress_rule(
             ec2.Peer.any_ipv4(), ec2.Port.tcp(80), "Allow HTTP access"
         )
-        security_group.add_ingress_rule(
-            ec2.Peer.any_ipv4(), ec2.Port.tcp(22), "Allow SSH access"
-        )
 
         # User data script to install Nginx and SSM agent
         user_data = ec2.UserData.for_linux()
         user_data.add_commands(
             "#!/bin/bash",
             "yum update -y",
+            "amazon-linux-extras enable nginx1",
             "yum install -y nginx amazon-ssm-agent",
-            "systemctl start nginx",
-            "systemctl enable nginx",
-            "systemctl start amazon-ssm-agent",
-            "systemctl enable amazon-ssm-agent",
+            "service nginx start"
+            # "systemctl start nginx",
+            # "systemctl enable nginx",
+            # "systemctl start amazon-ssm-agent",
+            # "systemctl enable amazon-ssm-agent",
         )
+
+        ###
+
+        # amazon-linux-extras enable nginx1
+        # yum install nginx
+        # sudo service nginx start
+
 
         # IAM role for EC2
         ec2_role = iam.Role(
