@@ -70,7 +70,6 @@ class AwsEc2CicdExampleStack(Stack):
             security_group=security_group,
             role=ec2_role,
             user_data=user_data,
-            key_name="your-key-pair-name",  # Replace with your EC2 key pair name
         )
 
         # S3 bucket for website files
