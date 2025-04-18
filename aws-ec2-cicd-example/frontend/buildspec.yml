@@ -6,6 +6,7 @@ phases:
       - yum install -y aws-cli
   pre_build:
     commands:
+      - cd aws-ec2-cicd-example
       - echo Checking frontend directory...
       - ls -la frontend/ || (echo "Error: frontend/ directory is empty or missing" && exit 1)
   build:
