@@ -1,12 +1,15 @@
 from aws_cdk import (
     aws_ec2 as ec2,
-    aws_s3 as s3,
+    aws_elasticloadbalancingv2 as elbv2,
+    aws_autoscaling as autoscaling,
     aws_iam as iam,
-    aws_codebuild as codebuild,
-    RemovalPolicy,
+    aws_codedeploy as codedeploy,
+    aws_ssm as ssm,
+    Stack,
     CfnOutput,
-    Stack
+    Duration
 )
+
 from constructs import Construct
 
 class AwsEc2CicdExampleStack(Stack):
@@ -14,127 +17,108 @@ class AwsEc2CicdExampleStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        # Create a VPC with a single public subnet
-        vpc = ec2.Vpc(self, "WebsiteVPC", max_azs=1, nat_gateways=0)
+        # Create VPC
+        vpc = ec2.Vpc(self, "VPC", max_azs=2)
 
-        # Security Group for EC2
-        security_group = ec2.SecurityGroup(
-            self,
-            "WebsiteSG",
+        # Security group for ALB
+        alb_sg = ec2.SecurityGroup(self, "ALBSecurityGroup",
             vpc=vpc,
-            allow_all_outbound=True,
-            description="Security group for website EC2",
+            description="Allow HTTP/HTTPS traffic to ALB"
         )
-        security_group.add_ingress_rule(
-            ec2.Peer.any_ipv4(), ec2.Port.tcp(80), "Allow HTTP access"
-        )
+        alb_sg.add_ingress_rule(ec2.Peer.any_ipv4(), ec2.Port.tcp(80), "Allow HTTP")
+        alb_sg.add_ingress_rule(ec2.Peer.any_ipv4(), ec2.Port.tcp(443), "Allow HTTPS")
 
-        # User data script to install Nginx and SSM agent
+        # Security group for EC2
+        ec2_sg = ec2.SecurityGroup(self, "EC2SecurityGroup",
+            vpc=vpc,
+            description="Allow HTTP from ALB and SSH"
+        )
+        ec2_sg.add_ingress_rule(alb_sg, ec2.Port.tcp(80), "Allow HTTP from ALB")
+        ec2_sg.add_ingress_rule(ec2.Peer.any_ipv4(), ec2.Port.tcp(22), "Allow SSH")
+
+        # User data script to install Nginx and CodeDeploy agent
         user_data = ec2.UserData.for_linux()
         user_data.add_commands(
             "#!/bin/bash",
-            "yum update -y",
-            "amazon-linux-extras enable nginx1",
-            "yum install -y nginx amazon-ssm-agent",
-            "service nginx start"
-            # "systemctl start nginx",
-            # "systemctl enable nginx",
-            # "systemctl start amazon-ssm-agent",
-            # "systemctl enable amazon-ssm-agent",
+            "apt-get update -y",
+            "apt-get install -y nginx ruby wget",
+            "systemctl enable nginx",
+            "systemctl start nginx",
+            "cd /tmp",
+            "wget https://aws-codedeploy-us-east-1.s3.amazonaws.com/latest/install",
+            "chmod +x ./install",
+            "./install auto",
+            "systemctl enable codedeploy-agent",
+            "systemctl start codedeploy-agent"
         )
-
-        ###
-
-        # amazon-linux-extras enable nginx1
-        # yum install nginx
-        # sudo service nginx start
-
 
         # IAM role for EC2
-        ec2_role = iam.Role(
-            self,
-            "EC2Role",
-            assumed_by=iam.ServicePrincipal("ec2.amazonaws.com"),
-            managed_policies=[
-                iam.ManagedPolicy.from_aws_managed_policy_name(
-                    "AmazonSSMManagedInstanceCore"
-                ),
-                iam.ManagedPolicy.from_aws_managed_policy_name(
-                    "AmazonS3ReadOnlyAccess"
-                ),
-            ],
+        ec2_role = iam.Role(self, "EC2Role",
+            assumed_by=iam.ServicePrincipal("ec2.amazonaws.com")
+        )
+        ec2_role.add_managed_policy(
+            iam.ManagedPolicy.from_aws_managed_policy_name("AmazonSSMManagedInstanceCore")
         )
 
-        # EC2 instance
-        instance = ec2.Instance(
-            self,
-            "WebsiteInstance",
-            instance_type=ec2.InstanceType("t2.micro"),
-            machine_image=ec2.MachineImage.latest_amazon_linux2(),  # Use Amazon Linux 2
-            vpc=vpc,
-            vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC),
-            security_group=security_group,
+        # Launch template for EC2
+        launch_template = ec2.LaunchTemplate(self, "LaunchTemplate",
+            machine_image=ec2.MachineImage.latest_amazon_linux2023(),
+            instance_type=ec2.InstanceType("t3.micro"),
+            security_group=ec2_sg,
             role=ec2_role,
-            user_data=user_data,
+            user_data=user_data
         )
 
-        # S3 bucket for website files
-        website_bucket = s3.Bucket(
-            self,
-            "WebsiteBucket",
-            removal_policy=RemovalPolicy.DESTROY,
-            auto_delete_objects=True,
+        # Auto Scaling Group
+        asg = autoscaling.AutoScalingGroup(self, "ASG",
+            vpc=vpc,
+            launch_template=launch_template,
+            min_capacity=1,
+            max_capacity=3,
+            desired_capacity=1,
+            vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC)
         )
 
-        # S3 bucket for pipeline artifacts
-        artifact_bucket = s3.Bucket(
-            self,
-            "ArtifactBucket",
-            removal_policy=RemovalPolicy.DESTROY,
-            auto_delete_objects=True,
+        # Application Load Balancer
+        alb = elbv2.ApplicationLoadBalancer(self, "ALB",
+            vpc=vpc,
+            internet_facing=True,
+            security_group=alb_sg,
+            vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC)
         )
 
-        # IAM role for CodeBuild
-        codebuild_role = iam.Role(
-            self,
-            "CodeBuildRole",
-            assumed_by=iam.ServicePrincipal("codebuild.amazonaws.com"),
-            managed_policies=[
-                iam.ManagedPolicy.from_aws_managed_policy_name("AmazonS3FullAccess"),
-                iam.ManagedPolicy.from_aws_managed_policy_name(
-                    "AmazonSSMFullAccess"
-                ),
-            ],
+        # Listener for HTTP
+        listener = alb.add_listener("Listener",
+            port=80,
+            open=True
+        )
+        listener.add_targets("Target",
+            port=80,
+            targets=[asg],
+            health_check=elbv2.HealthCheck(
+                path="/",
+                interval=Duration.seconds(30)
+            )
         )
 
-        # CodeBuild project
-        build_project = codebuild.PipelineProject(
-            self,
-            "BuildProject",
-            build_spec=codebuild.BuildSpec.from_source_filename(
-                "frontend/buildspec.yml"
-            ),
-            environment=codebuild.BuildEnvironment(
-                build_image=codebuild.LinuxBuildImage.STANDARD_5_0,
-            ),
-            environment_variables={
-                "WEBSITE_BUCKET": codebuild.BuildEnvironmentVariable(
-                    value=website_bucket.bucket_name
-                ),
-                "EC2_INSTANCE_ID": codebuild.BuildEnvironmentVariable(
-                    value=instance.instance_id
-                ),
-                "AWS_REGION": codebuild.BuildEnvironmentVariable(
-                    value=self.region
-                ),
-            },
-            role=codebuild_role,
+        # CodeDeploy application and deployment group
+        codedeploy_app = codedeploy.ServerApplication(self, "CodeDeployApp",
+            application_name="ReactApp"
+        )
+        self.deployment_group = codedeploy.ServerDeploymentGroup(self, "DeploymentGroup",
+            application=codedeploy_app,
+            auto_scaling_groups=[asg],
+            install_agent=True
         )
 
-        # Output the EC2 public IP
-        CfnOutput(
-            self,
-            "InstancePublicIP",
-            value=instance.instance_public_ip,
-            description="Public IP of the EC2 instance",
+        # Store ALB DNS name in SSM Parameter Store
+        ssm.StringParameter(self, "ALBDNSName",
+            parameter_name="/react-app/alb-dns",
+            string_value=alb.load_balancer_dns_name
+        )
+
+        # Output ALB DNS
+        CfnOutput(self, "ALBDNSOutput",
+            value=alb.load_balancer_dns_name,
+            description="ALB DNS Name"
         )
