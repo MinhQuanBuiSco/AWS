@@ -59,7 +59,7 @@ class PipelineStack(Stack):
                     }
                 },
                 "artifacts": {
-                    "base-directory": "aws-ec2-cicd-example/frontend",
+                    "base-directory": "aws-ec2-cicd-example/frontend/dist",
                     "files": [
                         "**/*",
                         "../../appspec.yml",
