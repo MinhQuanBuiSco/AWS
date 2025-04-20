@@ -2,19 +2,9 @@ version: 0.0
 os: linux
 files:
   - source: /
-    destination: /var/www/html
-  - source: nginx.conf
-    destination: /etc/nginx/conf.d/react-app.conf
-permissions:
-  - object: /var/www/html
-    owner: nginx
-    group: nginx
-    mode: 755
-  - object: /etc/nginx/conf.d/react-app.conf
-    owner: root
-    group: root
-    mode:targets:
-      AfterInstall:
-        - location: scripts/after_install.sh
-          timeout: 300
-          runas: root
+    destination: /usr/share/nginx/html/
+hooks:
+  AfterInstall:
+    - location: scripts/after_install.sh
+      timeout: 300
+      runas: root
