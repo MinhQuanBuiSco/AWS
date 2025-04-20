@@ -40,8 +40,8 @@ class AwsEc2CicdExampleStack(Stack):
         user_data = ec2.UserData.for_linux()
         user_data.add_commands(
             "#!/bin/bash",
-            "apt-get update -y",
-            "apt-get install -y nginx ruby wget",
+            "dnf update -y",
+            "dnf install -y nginx ruby wget",
             "systemctl enable nginx",
             "systemctl start nginx",
             "cd /tmp",
