@@ -1,14 +1,13 @@
-from aws_cdk import (
-    Stack,
-    pipelines,
-    SecretValue,
-    Stage,
-    aws_iam as iam
+from api_gateway_bedrock_ip_restriction_waf_codepipeline.api_gateway_bedrock_ip_restriction_waf_stack import (
+    ApiGatewayBedrockIpRestrictionWafStack,
 )
+from aws_cdk import SecretValue, Stack, Stage
+from aws_cdk import aws_iam as iam
+from aws_cdk import pipelines
 from constructs import Construct
-from api_gateway_bedrock_ip_restriction_waf_codepipeline.api_gateway_bedrock_ip_restriction_waf_stack import ApiGatewayBedrockIpRestrictionWafStack
-class PipelineStack(Stack):
 
+
+class PipelineStack(Stack):
     def __init__(self, scope: Construct, id: str, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
 
@@ -16,9 +15,10 @@ class PipelineStack(Stack):
         source = pipelines.CodePipelineSource.git_hub(
             "MinhQuanBuiSco/AWS",  # Replace with your repo
             "main",  # Branch
-            authentication=SecretValue.secrets_manager("github-token"),  # Store your token in Secrets Manager
+            authentication=SecretValue.secrets_manager(
+                "github-token"
+            ),  # Store your token in Secrets Manager
         )
-        
 
         synth_step = pipelines.ShellStep(
             "Synth",
@@ -41,9 +41,7 @@ class PipelineStack(Stack):
         # Add manual approval before deploying
         pipeline.add_stage(
             deploy_stage,
-            pre=[
-                pipelines.ManualApprovalStep("ManualApprovalBeforeDeploy")
-            ]
+            pre=[pipelines.ManualApprovalStep("ManualApprovalBeforeDeploy")],
         )
 
 

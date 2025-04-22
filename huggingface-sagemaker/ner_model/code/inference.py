@@ -1,22 +1,29 @@
-from transformers import AutoModelForTokenClassification, AutoTokenizer, pipeline
 import json
+
 import numpy as np
+from transformers import AutoModelForTokenClassification, AutoTokenizer, pipeline
+
 
 def model_fn(model_dir):
     tokenizer = AutoTokenizer.from_pretrained(model_dir)
     model = AutoModelForTokenClassification.from_pretrained(model_dir)
-    ner_pipeline = pipeline("ner", model=model, tokenizer=tokenizer, aggregation_strategy="simple")
+    ner_pipeline = pipeline(
+        "ner", model=model, tokenizer=tokenizer, aggregation_strategy="simple"
+    )
     return ner_pipeline
+
 
 def input_fn(request_body, request_content_type):
     if request_content_type == "application/json":
         return json.loads(request_body)  # ✅ Convert to dict
     raise ValueError(f"Unsupported content type: {request_content_type}")
 
+
 def predict_fn(input_data, model):
     # input_data is expected to be a dict with a 'text' field
     text = input_data.get("text", "")
     return model(text)
+
 
 def output_fn(prediction, content_type):
     if content_type == "application/json":
@@ -31,5 +38,5 @@ def output_fn(prediction, content_type):
             raise TypeError(f"Object of type {type(o)} is not JSON serializable")
 
         return json.dumps(prediction, default=convert)
-    
+
     raise ValueError(f"Unsupported content type: {content_type}")

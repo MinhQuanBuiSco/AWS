@@ -1,27 +1,23 @@
-from aws_cdk import (
-    Stack,
-    aws_lambda as _lambda,
-    aws_apigateway as apigateway,
-    aws_ec2 as ec2,
-    aws_iam as iam,
-    CfnOutput
-)
+from aws_cdk import CfnOutput, Stack
+from aws_cdk import aws_apigateway as apigateway
+from aws_cdk import aws_ec2 as ec2
+from aws_cdk import aws_iam as iam
+from aws_cdk import aws_lambda as _lambda
 from constructs import Construct
 
-class PrivateApiGatewayStack(Stack):
 
+class PrivateApiGatewayStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
         # 1️⃣ Create a new VPC
         vpc = ec2.Vpc(
-            self, "PrivateApiVpc",
-            max_azs=1,  
+            self,
+            "PrivateApiVpc",
+            max_azs=1,
             subnet_configuration=[
                 ec2.SubnetConfiguration(
-                    name="Public",
-                    subnet_type=ec2.SubnetType.PUBLIC,
-                    cidr_mask=24
+                    name="Public", subnet_type=ec2.SubnetType.PUBLIC, cidr_mask=24
                 ),
                 ec2.SubnetConfiguration(
                     name="PrivateSubnet",
@@ -33,7 +29,8 @@ class PrivateApiGatewayStack(Stack):
 
         # 2️⃣ Create Lambda function in the VPC
         func = _lambda.Function(
-            self, "PrivateLambda",
+            self,
+            "PrivateLambda",
             runtime=_lambda.Runtime.PYTHON_3_11,
             handler="index.handler",
             code=_lambda.Code.from_inline(
@@ -44,14 +41,16 @@ class PrivateApiGatewayStack(Stack):
 
         # 3️⃣ Create VPC endpoint for API Gateway
         vpc_endpoint = ec2.InterfaceVpcEndpoint(
-            self, "ApiGwVpcEndpoint",
+            self,
+            "ApiGwVpcEndpoint",
             vpc=vpc,
             service=ec2.InterfaceVpcEndpointAwsService.APIGATEWAY,
         )
 
         # 4️⃣ Create Private API Gateway
         api = apigateway.RestApi(
-            self, "PrivateApi",
+            self,
+            "PrivateApi",
             rest_api_name="PrivateApiGateway",
             endpoint_configuration=apigateway.EndpointConfiguration(
                 types=[apigateway.EndpointType.PRIVATE],
@@ -68,10 +67,10 @@ class PrivateApiGatewayStack(Stack):
                             "StringEquals": {
                                 "aws:SourceVpce": vpc_endpoint.vpc_endpoint_id
                             }
-                        }
+                        },
                     )
                 ]
-            )
+            ),
         )
 
         # 5️⃣ Attach Lambda integration
@@ -79,8 +78,9 @@ class PrivateApiGatewayStack(Stack):
         api.root.add_method("GET", integration)
 
         CfnOutput(
-            self, "ApiUrl",
+            self,
+            "ApiUrl",
             value=api.url,
             description="API Gateway endpoint URL",
-            export_name="OpenAIProxyUrl"
+            export_name="OpenAIProxyUrl",
         )

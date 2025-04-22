@@ -11,5 +11,5 @@ def handler(event, context):
         "applicant_id": app.get("applicant_id"),
         "decision": decision,
         "risk": risk,
-        "credit_score": event.get("credit_score")
+        "credit_score": event.get("credit_score"),
     }

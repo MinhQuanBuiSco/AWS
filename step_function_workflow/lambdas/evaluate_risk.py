@@ -10,8 +10,4 @@ def handler(event, context):
     else:
         risk = "high"
 
-    return {
-        "application": app,
-        "credit_score": credit_score,
-        "risk": risk
-    }
+    return {"application": app, "credit_score": credit_score, "risk": risk}
